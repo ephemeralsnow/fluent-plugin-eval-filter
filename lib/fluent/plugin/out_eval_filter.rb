@@ -36,33 +36,15 @@ class Fluent::EvalFilterOutput < Fluent::Output
   end
 
   def create_result(tag, time, record, result)
-    if result.is_a?(String)
-      [result, time, record]
-    elsif result.is_a?(Integer)
-      [tag, result, record]
-    elsif result.is_a?(Hash)
-      [tag, time, result]
-    elsif result.is_a?(Array)
-      if result.size == 1
-        if result[0].is_a?(String)
-          [result[0], time, record]
-        elsif result[0].is_a?(Integer)
-          [tag, result[0], record]
-        elsif result[0].is_a?(Hash)
-          [tag, time, record[0]]
-        end
-      elsif result.size == 2
-        if result[0].is_a?(String) && result[1].is_a?(Integer)
-          [result[0], result[1], record]
-        elsif result[0].is_a?(String) && result[1].is_a?(Hash)
-          [result[0], time, result[1]]
-        elsif result[0].is_a?(Integer) && result[1].is_a?(Hash)
-          [tag, result[0], result[1]]
-        end
-      elsif result.size == 3 && result[0].is_a?(String) && result[1].is_a?(Integer) && result[2].is_a?(Hash)
-        [result[0], result[1], result[2]]
-      end
+    result = [result] unless result.is_a?(Array)
+
+    result.each do |value|
+      tag = value if value.is_a?(String)
+      time = value if value.is_a?(Integer)
+      record = value if value.is_a?(Hash)
     end
+
+    [tag, time, record]
   end
 
 end
