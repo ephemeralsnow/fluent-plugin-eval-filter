@@ -14,6 +14,12 @@ class EvalFilterTest < Test::Unit::TestCase
     assert_raise(Fluent::ConfigError) do
       create_driver('')
     end
+    assert_raise(Fluent::ConfigError) do
+      create_driver(%[config1 @test = "\#{self.to_s}"])
+    end
+    assert_raise(Fluent::ConfigError) do
+      create_driver(%[filter1 "\#{tag}"])
+    end
   end
 
   def test_remove_tag_prefix

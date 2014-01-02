@@ -15,12 +15,20 @@ class Fluent::EvalFilterOutput < Fluent::Output
     @add_tag_suffix = conf['add_tag_suffix']
 
     conf.keys.select { |key| key =~ /^config\d+$/ }.sort_by { |key| key.sub('config', '').to_i }.each do |key|
-      instance_eval("#{conf[key]}")
+      begin
+        instance_eval("#{conf[key]}")
+      rescue Exception => e
+        raise Fluent::ConfigError, "#{key} #{conf[key]}\n" + e.to_s
+      end
     end
 
     @filters = []
     conf.keys.select { |key| key =~ /^filter\d+$/ }.sort_by { |key| key.sub('filter', '').to_i }.each do |key|
-      @filters << instance_eval("lambda do |tag, time, record| #{conf[key]} end")
+      begin
+        @filters << instance_eval("lambda do |tag, time, record| #{conf[key]} end")
+      rescue Exception => e
+        raise Fluent::ConfigError, "#{key} #{conf[key]}\n" + e.to_s
+      end
     end
 
     if @filters.empty?
