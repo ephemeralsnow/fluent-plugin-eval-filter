@@ -1,4 +1,4 @@
-# fluent-plugin-eval-filter
+# fluent-plugin-eval-filter [![Build Status](https://travis-ci.org/ephemeralsnow/fluent-plugin-eval-filter.png?branch=master)](https://travis-ci.org/ephemeralsnow/fluent-plugin-eval-filter)
 
 ## Installation
 
