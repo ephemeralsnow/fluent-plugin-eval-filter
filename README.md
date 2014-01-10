@@ -28,6 +28,20 @@ Or install it yourself as:
 </match>
 ```
 
+## Limitation
+
+Can not be used expression substitution.
+```
+<match raw.apache.access>
+  filter1 "#{tag}"
+</match>
+```
+
+'#' Is interpreted as the beginning of a comment.
+```
+  filter1 #=> "\""
+```
+
 ## Contributing
 
 1. Fork it
