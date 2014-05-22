@@ -46,10 +46,10 @@ class Fluent::EvalFilterOutput < Fluent::Output
   end
 
   def handle_tag(tag)
-    tag.sub!(@remove_tag_prefix, '') if @remove_tag_prefix
-    tag.sub!(@remove_tag_suffix, '') if @remove_tag_suffix
-    tag.sub!(/^\.*/, "#{@add_tag_prefix}.") if @add_tag_prefix
-    tag.sub!(/\.*$/, ".#{@add_tag_suffix}") if @add_tag_suffix
+    tag = tag.sub(@remove_tag_prefix, '') if @remove_tag_prefix
+    tag = tag.sub(@remove_tag_suffix, '') if @remove_tag_suffix
+    tag = tag.sub(/^\.*/, "#{@add_tag_prefix}.") if @add_tag_prefix
+    tag = tag.sub(/\.*$/, ".#{@add_tag_suffix}") if @add_tag_suffix
     tag
   end
 
