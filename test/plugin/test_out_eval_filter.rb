@@ -184,4 +184,116 @@ class EvalFilterTest < Test::Unit::TestCase
     assert_equal "test.#{hostname}", emits[0][0]
   end
 
+  def test_amplify_tag_filter
+    d = create_driver(%[
+      filter1 (1..3).map { |n| tag + n.to_s }.to_enum
+    ])
+
+    d.run { d.emit({}) }
+
+    emits = d.emits
+    assert_equal 3, emits.size
+    p emits[0]
+    assert_equal "test1", emits[0][0]
+    p emits[1]
+    assert_equal "test2", emits[1][0]
+    p emits[2]
+    assert_equal "test3", emits[2][0]
+  end
+
+  def test_amplify_time_filter
+    d = create_driver(%[
+      filter1 (1..3).map { |n| time + n }.to_enum
+    ])
+
+    d.run { d.emit({}) }
+
+    emits = d.emits
+    assert_equal 3, emits.size
+    p emits[0]
+    assert emits[0][1] > 0
+    p emits[1]
+    assert_equal emits[0][1] + 1, emits[1][1]
+    p emits[2]
+    assert_equal emits[1][1] + 1, emits[2][1]
+  end
+
+  def test_amplify_record_filter
+    d = create_driver(%[
+      filter1 (1..3).map { |n| record.merge({'n' => n}) }.to_enum
+    ])
+
+    d.run { d.emit({'key' => 'value'}) }
+
+    emits = d.emits
+    assert_equal 3, emits.size
+    p emits[0]
+    assert_equal 2, emits[0][2].size
+    assert_equal true, emits[0][2].key?('key')
+    assert_equal 'value', emits[0][2]['key']
+    assert_equal true, emits[0][2].key?('n')
+    assert_equal 1, emits[0][2]['n']
+    p emits[1]
+    assert_equal 2, emits[1][2].size
+    assert_equal true, emits[1][2].key?('key')
+    assert_equal 'value', emits[1][2]['key']
+    assert_equal true, emits[1][2].key?('n')
+    assert_equal 2, emits[1][2]['n']
+    p emits[2]
+    assert_equal 2, emits[2][2].size
+    assert_equal true, emits[2][2].key?('key')
+    assert_equal 'value', emits[2][2]['key']
+    assert_equal true, emits[2][2].key?('n')
+    assert_equal 3, emits[2][2]['n']
+  end
+
+  def test_split_record_filter
+    d = create_driver(%[
+      filter1 record.map { |key, value| [[tag, key].join('.'), {'key' => value}] }.to_enum
+    ])
+
+    d.run { d.emit({'key1' => 'value1', 'key2' => 'value2', 'key3' => 'value3'}) }
+
+    emits = d.emits
+    assert_equal 3, emits.size
+    p emits[0]
+    assert_equal 'test.key1', emits[0][0]
+    assert_equal 1, emits[0][2].size
+    assert_equal true, emits[0][2].key?('key')
+    assert_equal 'value1', emits[0][2]['key']
+    p emits[1]
+    assert_equal 'test.key2', emits[1][0]
+    assert_equal 1, emits[1][2].size
+    assert_equal true, emits[1][2].key?('key')
+    assert_equal 'value2', emits[1][2]['key']
+    p emits[2]
+    assert_equal 'test.key3', emits[2][0]
+    assert_equal 1, emits[2][2].size
+    assert_equal true, emits[2][2].key?('key')
+    assert_equal 'value3', emits[2][2]['key']
+  end
+
+  def test_split_array_in_record_filter
+    d = create_driver(%[
+      filter1 record['array'].map { |v| {'value' => v} }.to_enum
+    ])
+
+    d.run { d.emit({'array' => ['test1', 'test2', 'test3']}) }
+
+    emits = d.emits
+    assert_equal 3, emits.size
+    p emits[0]
+    assert_equal 1, emits[0][2].size
+    assert_equal true, emits[0][2].key?('value')
+    assert_equal 'test1', emits[0][2]['value']
+    p emits[1]
+    assert_equal 1, emits[1][2].size
+    assert_equal true, emits[1][2].key?('value')
+    assert_equal 'test2', emits[1][2]['value']
+    p emits[2]
+    assert_equal 1, emits[2][2].size
+    assert_equal true, emits[2][2].key?('value')
+    assert_equal 'test3', emits[2][2]['value']
+  end
+
 end
