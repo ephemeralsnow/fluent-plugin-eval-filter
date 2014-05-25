@@ -40,8 +40,10 @@ class Fluent::EvalFilterOutput < Fluent::Output
     tag = handle_tag(tag)
     es.each do |time, record|
       results = filter_record(tag, time, record)
-      results.each do |result|
-        Fluent::Engine.emit(*result)
+      if results
+        results.each do |result|
+          Fluent::Engine.emit(*result)
+        end
       end
     end
     chain.next
@@ -56,16 +58,17 @@ class Fluent::EvalFilterOutput < Fluent::Output
   end
 
   def filter_record(tag, time, record)
-    results = []
     @filters.each do |filter|
+      results = []
       filter_results = filter.call(tag, time, record)
       filter_results = [filter_results] unless filter_results.instance_of?(Enumerator)
       filter_results.each do |filter_result|
         result = create_result(tag, time, record, filter_result) if filter_result
         results << result if result
       end
+      return results unless results.empty?
     end
-    results
+    nil
   end
 
   def create_result(tag, time, record, result)
