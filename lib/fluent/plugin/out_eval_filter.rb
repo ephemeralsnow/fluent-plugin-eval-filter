@@ -2,6 +2,11 @@ class Fluent::EvalFilterOutput < Fluent::Output
 
   Fluent::Plugin.register_output('eval_filter', self)
 
+  # Define `router` method of v0.12 to support v0.10 or earlier
+  unless method_defined?(:router)
+    define_method("router") { Fluent::Engine }
+  end
+
   def configure(conf)
     super
 
@@ -42,7 +47,7 @@ class Fluent::EvalFilterOutput < Fluent::Output
       results = filter_record(tag, time, record)
       if results
         results.each do |result|
-          Fluent::Engine.emit(*result)
+          router.emit(*result)
         end
       end
     end
