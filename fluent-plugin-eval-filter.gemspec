@@ -19,4 +19,5 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency "fluentd", "~> 0"
   spec.add_development_dependency "rake", "~> 0"
+  spec.add_development_dependency "test-unit", "~> 3.1.0"
 end
