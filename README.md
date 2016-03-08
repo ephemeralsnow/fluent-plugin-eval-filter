@@ -28,6 +28,52 @@ Or install it yourself as:
 </match>
 ```
 
+## Filter Plugin
+
+Note that this filter version does not have rewrite tag functionality.
+
+## Configuration
+
+
+### filter:
+
+    <filter **>
+      type eval
+      filter1 "[time, record] if record['status'] == '404'"
+      filter2 "[time, record] if record['status'] == 'POST'"
+    </filter>
+
+
+### typecast(string to integer):
+
+    <filter **>
+      type eval
+      filter1 "record['status'] = record['status'].to_i; [time, record]"
+    </filter>
+
+### modify record(add value):
+
+    <filter **>
+      type eval
+      filter1 "record['user_id'] = record['message'].split(':').last.to_i; [time, record]"
+    </filter>
+
+#### input
+    {'status' => '301', 'message' => 'user_id:1'}
+    {'status' => '302', 'message' => 'user_id:2'}
+    {'status' => '404', 'message' => 'user_id:3'}
+    {'status' => '503', 'message' => 'user_id:4'}
+    {'status' => '401', 'message' => 'user_id:5'}
+
+#### output
+    {'status' => '301', 'message' => 'user_id:1', 'user_id' => 1}
+    {'status' => '302', 'message' => 'user_id:2', 'user_id' => 2}
+    {'status' => '404', 'message' => 'user_id:3', 'user_id' => 3}
+    {'status' => '503', 'message' => 'user_id:4', 'user_id' => 4}
+    {'status' => '401', 'message' => 'user_id:5', 'user_id' => 5}
+
+
+
 ## Limitation
 
 Can not be used expression substitution.
