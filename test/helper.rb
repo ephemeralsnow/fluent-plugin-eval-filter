@@ -23,6 +23,7 @@ unless ENV.has_key?('VERBOSE')
 end
 
 require 'fluent/plugin/out_eval_filter'
+require 'fluent/plugin/filter_eval'
 
 class Test::Unit::TestCase
 end

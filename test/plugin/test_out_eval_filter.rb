@@ -1,6 +1,6 @@
 require 'helper'
 
-class EvalFilterTest < Test::Unit::TestCase
+class EvalFilterOutputTest < Test::Unit::TestCase
 
   def setup
     Fluent::Test.setup
