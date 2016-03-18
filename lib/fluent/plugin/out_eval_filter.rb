@@ -2,6 +2,8 @@ class Fluent::EvalFilterOutput < Fluent::Output
 
   Fluent::Plugin.register_output('eval_filter', self)
 
+  config_param :requires, :string, default: nil, :desc => "require libraries."
+
   # Define `router` method of v0.12 to support v0.10 or earlier
   unless method_defined?(:router)
     define_method("router") { Fluent::Engine }
@@ -9,6 +11,16 @@ class Fluent::EvalFilterOutput < Fluent::Output
 
   def configure(conf)
     super
+
+    if @requires
+      @requires.split(',').each do |lib|
+        begin
+          require lib
+        rescue Exception => e
+          raise Fluent::ConfigError, "\n#{e.message}\n#{e.backtrace.join("\n")}"
+        end
+      end
+    end
 
     if remove_tag_prefix = conf['remove_tag_prefix']
       @remove_tag_prefix = /^#{Regexp.escape(remove_tag_prefix)}\.*/
