@@ -45,7 +45,7 @@ Or install it yourself as:
 ## Filter Plugin
 
 Note that this filter version does not have rewrite tag functionality.
-Should rerturn [time, record].
+Should return [time, record].
 
 ## Configuration
 
