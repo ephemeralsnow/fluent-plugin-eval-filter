@@ -101,4 +101,28 @@ class EvalFilterTest < Test::Unit::TestCase
       assert_equal(es[4][2]['user_id'], 5)
     end
   end
+
+  sub_test_case 'require libraries' do
+    test 'require yaml' do
+      config = %[
+        requires yaml
+        filter1 record.to_yaml; [time, record]
+      ]
+      assert_nothing_raised {
+        create_driver(config)
+        es = filter(config, [{'key' => 'value'}])
+        assert_equal(es.size, 1)
+      }
+    end
+
+    test 'require error' do
+      config = %[
+        requires hoge
+        filter1 record.to_yaml; [time, record]
+      ]
+      assert_raise(Fluent::ConfigError) do
+        create_driver(config)
+      end
+    end
+  end
 end

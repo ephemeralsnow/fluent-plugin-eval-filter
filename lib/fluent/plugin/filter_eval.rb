@@ -2,12 +2,24 @@ module Fluent
   class EvalFilter < Filter
     Fluent::Plugin.register_filter('eval', self)
 
+    config_param :requires, :string, default: nil, :desc => "require libraries."
+
     def initialize
       super
     end
 
     def configure(conf)
       super
+
+      if @requires
+        @requires.split(',').each do |lib|
+          begin
+            require lib
+          rescue Exception => e
+            raise Fluent::ConfigError, "\n#{e.message}\n#{e.backtrace.join("\n")}"
+          end
+        end
+      end
 
       conf.keys.select { |key| key =~ /^config\d+$/ }.sort_by { |key| key.sub('config', '').to_i }.each do |key|
         begin

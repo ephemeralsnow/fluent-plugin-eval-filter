@@ -28,9 +28,24 @@ Or install it yourself as:
 </match>
 ```
 
+### require libraries
+```
+<match raw.apache.access>
+  type eval_filter
+  remove_tag_prefix raw
+  add_tag_prefix filtered
+  requires yaml # comma separated values
+
+  config1 @hostname = YAML.load({'hostname' => 'web01'})['hostname']
+
+  filter1 [[tag, @hostname].join('.'), time, record] if record['method'] == 'GET'
+</match>
+```
+
 ## Filter Plugin
 
 Note that this filter version does not have rewrite tag functionality.
+Should rerturn [time, record].
 
 ## Configuration
 

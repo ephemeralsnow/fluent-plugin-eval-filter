@@ -296,4 +296,23 @@ class EvalFilterOutputTest < Test::Unit::TestCase
     assert_equal 'test3', emits[2][2]['value']
   end
 
+  def test_require_libraries
+    d = create_driver(%[
+      requires yaml
+      filter1 record.to_yaml; ['tag', 0, record]
+    ])
+    assert_nothing_raised {
+      d.run { d.emit({'key' => 'value'}) }
+    }
+  end
+
+  def test_require_error
+    assert_raise(Fluent::ConfigError) do
+      d = create_driver(%[
+        requires hoge
+        filter1 record.to_yaml; ['tag', 0, record]
+      ])
+    end
+  end
+
 end
