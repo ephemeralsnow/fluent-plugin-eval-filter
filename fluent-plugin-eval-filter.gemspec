@@ -4,7 +4,7 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 
 Gem::Specification.new do |spec|
   spec.name          = "fluent-plugin-eval-filter"
-  spec.version       = "0.0.5"
+  spec.version       = "0.1.0"
   spec.authors       = ["Yuzuki Masaru"]
   spec.email         = ["ephemeralsnow@gmail.com"]
   spec.description   = %q{Fluentd Output eval filter plugin.}
