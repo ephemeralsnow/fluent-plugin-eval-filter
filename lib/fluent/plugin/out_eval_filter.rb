@@ -8,11 +8,6 @@ class Fluent::Plugin::EvalFilterOutput < Fluent::Plugin::Output
 
   config_param :requires, :string, default: nil, :desc => "require libraries."
 
-  # Define `router` method of v0.12 to support v0.10 or earlier
-  unless method_defined?(:router)
-    define_method("router") { Fluent::Engine }
-  end
-
   def configure(conf)
     super
 
