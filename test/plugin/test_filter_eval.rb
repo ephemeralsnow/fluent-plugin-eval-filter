@@ -7,7 +7,7 @@ class EvalFilterTest < Test::Unit::TestCase
 
   setup do
     Fluent::Test.setup
-    @time = Fluent::Engine.now
+    @time = event_time
   end
 
   def create_driver(conf = '')
