@@ -8,6 +8,7 @@ rescue Bundler::BundlerError => e
   exit e.status_code
 end
 require 'test/unit'
+require 'fluent/test/helpers'
 
 $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 $LOAD_PATH.unshift(File.dirname(__FILE__))
@@ -26,4 +27,5 @@ require 'fluent/plugin/out_eval_filter'
 require 'fluent/plugin/filter_eval'
 
 class Test::Unit::TestCase
+  include Fluent::Test::Helpers
 end

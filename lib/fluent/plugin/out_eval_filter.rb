@@ -1,6 +1,10 @@
-class Fluent::EvalFilterOutput < Fluent::Output
+require 'fluent/plugin/output'
+
+class Fluent::Plugin::EvalFilterOutput < Fluent::Plugin::Output
 
   Fluent::Plugin.register_output('eval_filter', self)
+
+  helpers :event_emitter
 
   config_param :requires, :string, default: nil, :desc => "require libraries."
 
@@ -53,7 +57,7 @@ class Fluent::EvalFilterOutput < Fluent::Output
     end
   end
 
-  def emit(tag, es, chain)
+  def process(tag, es)
     tag = handle_tag(tag)
     es.each do |time, record|
       results = filter_record(tag, time, record)
@@ -63,7 +67,6 @@ class Fluent::EvalFilterOutput < Fluent::Output
         end
       end
     end
-    chain.next
   end
 
   def handle_tag(tag)

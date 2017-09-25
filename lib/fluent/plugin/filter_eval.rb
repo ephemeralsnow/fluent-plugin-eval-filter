@@ -1,4 +1,6 @@
-module Fluent
+require 'fluent/plugin/filter'
+
+module Fluent::Plugin
   class EvalFilter < Filter
     Fluent::Plugin.register_filter('eval', self)
 
@@ -43,17 +45,13 @@ module Fluent
       end
     end
 
-    def filter_stream(tag, es)
-      new_es = MultiEventStream.new
-      es.each { |time, record|
-        begin
-          filtered_record = filter_record(tag, time, record)
-          new_es.add(*filtered_record) if filtered_record
-        rescue => e
-          router.emit_error_event(tag, time, record, e)
-        end
-      }
-      new_es
+    def filter(tag, time, record)
+      begin
+        filtered_record = filter_record(tag, time, record)
+        return filtered_record if filtered_record
+      rescue => e
+        router.emit_error_event(tag, time, record, e)
+      end
     end
 
     private

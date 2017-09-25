@@ -1,4 +1,6 @@
+# coding: utf-8
 require 'helper'
+require 'fluent/test/driver/filter'
 
 class EvalFilterTest < Test::Unit::TestCase
   include Fluent
@@ -9,24 +11,24 @@ class EvalFilterTest < Test::Unit::TestCase
   end
 
   def create_driver(conf = '')
-    Test::FilterTestDriver.new(EvalFilter).configure(conf)
+    Test::Driver::Filter.new(Plugin::EvalFilter).configure(conf)
   end
 
   def filter(config, msgs)
     d = create_driver(config)
-    d.run {
+    d.run(default_tag: 'test') {
       msgs.each {|msg|
-        d.filter(msg, @time) # Filterプラグインにメッセージを通す
+        d.feed(@time, msg) # Filterプラグインにメッセージを通す
       }
     }
-    filtered = d.filtered_as_array # 結果を受け取る. [tag, time, record]の配列
+    filtered = d.filtered.map{|e| e.last} # 結果を受け取る. [record]の配列
     filtered
   end
 
   sub_test_case 'configure' do
     test 'check default' do
       config = %[
-        filter1 [time, record] if record['status'] == '404'
+        filter1 "[time, record] if record['status'] == '404'"
       ]
       assert_nothing_raised {
         create_driver(config)
@@ -48,13 +50,13 @@ class EvalFilterTest < Test::Unit::TestCase
         {'status' => '401', 'message' => 'message'}
       ]
       config = %[
-        filter1 [time, record] if record['status'] == '404'
-        filter2 [time, record] if record['status'] == '503'
+        filter1 "[time, record] if record['status'] == '404'"
+        filter2 "[time, record] if record['status'] == '503'"
       ]
       es = filter(config, msgs)
       assert_equal(es.size, 2)
-      assert_equal(es[0][2]['status'], '404')
-      assert_equal(es[1][2]['status'], '503')
+      assert_equal(es[0][1]['status'], '404')
+      assert_equal(es[1][1]['status'], '503')
     end
   end
 
@@ -68,15 +70,15 @@ class EvalFilterTest < Test::Unit::TestCase
         {'status' => '401', 'message' => 'message'}
       ]
       config = %[
-        filter1 record['status'] = record['status'].to_i; [time, record]
+        filter1 "record['status'] = record['status'].to_i; [time, record]"
       ]
       es = filter(config, msgs)
       assert_equal(es.size, 5)
-      assert_equal(es[0][2]['status'], 301)
-      assert_equal(es[1][2]['status'], 302)
-      assert_equal(es[2][2]['status'], 404)
-      assert_equal(es[3][2]['status'], 503)
-      assert_equal(es[4][2]['status'], 401)
+      assert_equal(es[0][1]['status'], 301)
+      assert_equal(es[1][1]['status'], 302)
+      assert_equal(es[2][1]['status'], 404)
+      assert_equal(es[3][1]['status'], 503)
+      assert_equal(es[4][1]['status'], 401)
     end
   end
 
@@ -90,15 +92,15 @@ class EvalFilterTest < Test::Unit::TestCase
         {'status' => '401', 'message' => 'user_id:5'}
       ]
       config = %[
-        filter1 record['user_id'] = record['message'].split(':').last.to_i; [time, record]
+        filter1 "record['user_id'] = record['message'].split(':').last.to_i; [time, record]"
       ]
       es = filter(config, msgs)
       assert_equal(es.size, 5)
-      assert_equal(es[0][2]['user_id'], 1)
-      assert_equal(es[1][2]['user_id'], 2)
-      assert_equal(es[2][2]['user_id'], 3)
-      assert_equal(es[3][2]['user_id'], 4)
-      assert_equal(es[4][2]['user_id'], 5)
+      assert_equal(es[0][1]['user_id'], 1)
+      assert_equal(es[1][1]['user_id'], 2)
+      assert_equal(es[2][1]['user_id'], 3)
+      assert_equal(es[3][1]['user_id'], 4)
+      assert_equal(es[4][1]['user_id'], 5)
     end
   end
 
@@ -106,7 +108,7 @@ class EvalFilterTest < Test::Unit::TestCase
     test 'require yaml' do
       config = %[
         requires yaml
-        filter1 record.to_yaml; [time, record]
+        filter1 "record.to_yaml; [time, record]"
       ]
       assert_nothing_raised {
         create_driver(config)
@@ -118,7 +120,7 @@ class EvalFilterTest < Test::Unit::TestCase
     test 'require error' do
       config = %[
         requires hoge
-        filter1 record.to_yaml; [time, record]
+        filter1 "record.to_yaml; [time, record]"
       ]
       assert_raise(Fluent::ConfigError) do
         create_driver(config)
