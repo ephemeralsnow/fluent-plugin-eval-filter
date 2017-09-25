@@ -24,7 +24,7 @@ Or install it yourself as:
 
   config1 @hostname = `hostname -s`.chomp
 
-  filter1 [[tag, @hostname].join('.'), time, record] if record['method'] == 'GET'
+  filter1 "[[tag, @hostname].join('.'), time, record] if record['method'] == 'GET'"
 </match>
 ```
 
@@ -38,7 +38,7 @@ Or install it yourself as:
 
   config1 @hostname = YAML.load({'hostname' => 'web01'})['hostname']
 
-  filter1 [[tag, @hostname].join('.'), time, record] if record['method'] == 'GET'
+  filter1 "[[tag, @hostname].join('.'), time, record] if record['method'] == 'GET'"
 </match>
 ```
 
