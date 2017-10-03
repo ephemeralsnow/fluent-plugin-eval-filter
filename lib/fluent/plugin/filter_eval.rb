@@ -47,20 +47,14 @@ module Fluent::Plugin
 
     def filter(tag, time, record)
       begin
-        filtered_record = filter_record(tag, time, record)
-        return filtered_record if filtered_record
+        @filters.each do |filter|
+          filter_results = filter.call(tag, time, record)
+          return filter_results if filter_results
+        end
+        nil
       rescue => e
         router.emit_error_event(tag, time, record, e)
       end
-    end
-
-    private
-    def filter_record(tag, time, record)
-      @filters.each do |filter|
-        filter_results = filter.call(tag, time, record)
-        return filter_results if filter_results
-      end
-      nil
     end
   end
 end
