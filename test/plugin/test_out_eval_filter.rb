@@ -16,17 +16,27 @@ class EvalFilterOutputTest < Test::Unit::TestCase
       create_driver('')
     end
     assert_raise(Fluent::ConfigError) do
-      create_driver(%[config1 @test = "\#{self.to_s}"])
+      create_driver(%[
+        <filter>
+          config @test = "\#{self.to_s}"
+        </filter>
+      ])
     end
     assert_raise(NameError) do
-      create_driver(%[filter1 "\#{tag}"])
+      create_driver(%[
+        <filter>
+          filter "\#{tag}"
+        </filter>
+      ])
     end
   end
 
   def test_remove_tag_prefix
     d = create_driver(%[
       remove_tag_prefix t1
-      filter1 tag
+      <filter>
+        filter tag
+      </filter>
     ])
 
     d.run(default_tag: 't1.t2.t3') { d.feed({}) }
@@ -39,7 +49,9 @@ class EvalFilterOutputTest < Test::Unit::TestCase
   def test_remove_tag_suffix
     d = create_driver(%[
       remove_tag_suffix t3
-      filter1 tag
+      <filter>
+        filter tag
+      </filter>
     ])
 
     d.run(default_tag: 't1.t2.t3') { d.feed({}) }
@@ -52,7 +64,9 @@ class EvalFilterOutputTest < Test::Unit::TestCase
   def test_add_tag_prefix
     d = create_driver(%[
       add_tag_prefix t0
-      filter1 tag
+      <filter>
+        filter tag
+      </filter>
     ])
 
     d.run(default_tag: 't1.t2.t3') { d.feed({}) }
@@ -65,7 +79,9 @@ class EvalFilterOutputTest < Test::Unit::TestCase
   def test_add_tag_suffix
     d = create_driver(%[
       add_tag_suffix t4
-      filter1 tag
+      <filter>
+        filter tag
+      </filter>
     ])
 
     d.run(default_tag: 't1.t2.t3') { d.feed({}) }
@@ -81,7 +97,9 @@ class EvalFilterOutputTest < Test::Unit::TestCase
       remove_tag_suffix t3
       add_tag_prefix t4
       add_tag_suffix t5
-      filter1 tag
+      <filter>
+        filter tag
+      </filter>
     ])
 
     d.run(default_tag: 't1.t2.t3') { d.feed({}) }
@@ -93,7 +111,9 @@ class EvalFilterOutputTest < Test::Unit::TestCase
 
   def test_drop_all_filter
     d = create_driver(%[
-      filter1 nil
+      <filter>
+        filter nil
+      </filter>
     ])
 
     d.run(default_tag: 't1.t2.t3') { d.feed({}) }
@@ -104,7 +124,9 @@ class EvalFilterOutputTest < Test::Unit::TestCase
 
   def test_modify_record_filter
     d = create_driver(%[
-      filter1 "record.merge!({'key' => 'value'})"
+      <filter>
+        filter "record.merge!({'key' => 'value'})"
+      </filter>
     ])
 
     d.run(default_tag: 'test') { d.feed({}) }
@@ -119,8 +141,12 @@ class EvalFilterOutputTest < Test::Unit::TestCase
 
   def test_replace_all_filter
     d = create_driver(%[
-      filter1 nil
-      filter2 "['tag', 0, {'key' => 'value'}]"
+      <filter>
+        filter nil
+      </filter>
+      <filter>
+        filter "['tag', 0, {'key' => 'value'}]"
+      </filter>
     ])
 
     d.run(default_tag: 'test') { d.feed({}) }
@@ -136,8 +162,12 @@ class EvalFilterOutputTest < Test::Unit::TestCase
 
   def test_conditional_filter
     d = create_driver(%[
-      filter1 "[['http', tag].join('.'), record] if /^http:/.match(record['url'])"
-      filter2 "(record['secure'] = true; [['https', tag].join('.'), record]) if /^https:/.match(record['url'])"
+      <filter>
+        filter "[['http', tag].join('.'), record] if /^http:/.match(record['url'])"
+      </filter>
+      <filter>
+        filter "(record['secure'] = true; [['https', tag].join('.'), record]) if /^https:/.match(record['url'])"
+      </filter>
     ])
 
     d.run(default_tag: 'test') do
@@ -163,8 +193,10 @@ class EvalFilterOutputTest < Test::Unit::TestCase
   def test_reference_to_an_instance_variable_filter
     hostname = `hostname -s`.chomp
     d = create_driver(%[
-      config1 @hostname = `hostname -s`.chomp
-      filter1 "[tag, @hostname].join('.')"
+      <filter>
+        config @hostname = `hostname -s`.chomp
+        filter "[tag, @hostname].join('.')"
+      </filter>
     ])
 
     d.run(default_tag: 'test') { d.feed({}) }
@@ -176,7 +208,9 @@ class EvalFilterOutputTest < Test::Unit::TestCase
 
   def test_amplify_tag_filter
     d = create_driver(%[
-      filter1 "(1..3).map { |n| tag + n.to_s }.to_enum"
+      <filter>
+        filter "(1..3).map { |n| tag + n.to_s }.to_enum"
+      </filter>
     ])
 
     d.run(default_tag: 'test') { d.feed({}) }
@@ -190,7 +224,9 @@ class EvalFilterOutputTest < Test::Unit::TestCase
 
   def test_amplify_time_filter
     d = create_driver(%[
-      filter1 "(1..3).map { |n| time + n }.to_enum"
+      <filter>
+        filter "(1..3).map { |n| time + n }.to_enum"
+      </filter>
     ])
 
     d.run(default_tag: 'test') { d.feed({}) }
@@ -204,7 +240,9 @@ class EvalFilterOutputTest < Test::Unit::TestCase
 
   def test_amplify_record_filter
     d = create_driver(%[
-      filter1 "(1..3).map { |n| record.merge({'n' => n}) }.to_enum"
+      <filter>
+        filter "(1..3).map { |n| record.merge({'n' => n}) }.to_enum"
+      </filter>
     ])
 
     d.run(default_tag: 'test') { d.feed({'key' => 'value'}) }
@@ -230,7 +268,9 @@ class EvalFilterOutputTest < Test::Unit::TestCase
 
   def test_split_record_filter
     d = create_driver(%[
-      filter1 "record.map { |key, value| [[tag, key].join('.'), {'key' => value}] }.to_enum"
+      <filter>
+        filter "record.map { |key, value| [[tag, key].join('.'), {'key' => value}] }.to_enum"
+      </filter>
     ])
 
     d.run(default_tag: 'test') { d.feed({'key1' => 'value1', 'key2' => 'value2', 'key3' => 'value3'}) }
@@ -253,7 +293,9 @@ class EvalFilterOutputTest < Test::Unit::TestCase
 
   def test_split_array_in_record_filter
     d = create_driver(%[
-      filter1 "record['array'].map { |v| {'value' => v} }.to_enum"
+      <filter>
+        filter "record['array'].map { |v| {'value' => v} }.to_enum"
+      </filter>
     ])
 
     d.run(default_tag: 'test') { d.feed({'array' => ['test1', 'test2', 'test3']}) }
@@ -274,7 +316,9 @@ class EvalFilterOutputTest < Test::Unit::TestCase
   def test_require_libraries
     d = create_driver(%[
       requires yaml
-      filter1 "record.to_yaml; ['tag', 0, record]"
+      <filter>
+        filter "record.to_yaml; ['tag', 0, record]"
+      </filter>
     ])
     assert_nothing_raised {
       d.run(default_tag: 'test') { d.feed({'key' => 'value'}) }
@@ -285,7 +329,9 @@ class EvalFilterOutputTest < Test::Unit::TestCase
     assert_raise(Fluent::ConfigError) do
       d = create_driver(%[
         requires hoge
-        filter1 "record.to_yaml; ['tag', 0, record]"
+        <filter>
+          filter "record.to_yaml; ['tag', 0, record]"
+        </filter>
       ])
     end
   end

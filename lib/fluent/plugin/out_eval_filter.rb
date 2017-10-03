@@ -7,6 +7,10 @@ class Fluent::Plugin::EvalFilterOutput < Fluent::Plugin::Output
   helpers :event_emitter
 
   config_param :requires, :string, default: nil, :desc => "require libraries."
+  config_section :filter, param_name: :filter_config, multi: true do
+    config_param :filter, :string
+    config_param :config, :string, default: ""
+  end
 
   def configure(conf)
     super
@@ -30,20 +34,20 @@ class Fluent::Plugin::EvalFilterOutput < Fluent::Plugin::Output
     @add_tag_prefix = conf['add_tag_prefix']
     @add_tag_suffix = conf['add_tag_suffix']
 
-    conf.keys.select { |key| key =~ /^config\d+$/ }.sort_by { |key| key.sub('config', '').to_i }.each do |key|
+    @filter_config.each do |conf|
       begin
-        instance_eval("#{conf[key]}")
+        instance_eval("#{conf.config}")
       rescue Exception => e
-        raise Fluent::ConfigError, "#{key} #{conf[key]}\n" + e.to_s
+        raise Fluent::ConfigError, "#{key} #{conf.config}\n" + e.to_s
       end
     end
 
     @filters = []
-    conf.keys.select { |key| key =~ /^filter\d+$/ }.sort_by { |key| key.sub('filter', '').to_i }.each do |key|
+    @filter_config.each do |conf|
       begin
-        @filters << instance_eval("lambda do |tag, time, record| #{conf[key]} end")
+        @filters << instance_eval("lambda do |tag, time, record| #{conf.filter} end")
       rescue Exception => e
-        raise Fluent::ConfigError, "#{key} #{conf[key]}\n" + e.to_s
+        raise Fluent::ConfigError, "#{key} #{conf.filter}\n" + e.to_s
       end
     end
 
