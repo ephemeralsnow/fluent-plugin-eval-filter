@@ -325,6 +325,18 @@ class EvalFilterOutputTest < Test::Unit::TestCase
     }
   end
 
+  def test_require_libraries_with_whitespace
+    d = create_driver(%[
+      requires yaml, time
+      <filter>
+        filter "record.to_yaml; ['tag', Time.now.to_i, record]"
+      </filter>
+    ])
+    assert_nothing_raised {
+      d.run(default_tag: 'test') { d.feed({'key' => 'value'}) }
+    }
+  end
+
   def test_require_error
     assert_raise(Fluent::ConfigError) do
       d = create_driver(%[

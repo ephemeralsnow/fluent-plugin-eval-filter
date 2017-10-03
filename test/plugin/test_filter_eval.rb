@@ -129,6 +129,18 @@ class EvalFilterTest < Test::Unit::TestCase
       }
     end
 
+    test 'require libraries with whitespace' do
+      d = create_driver(%[
+        requires yaml, time
+        <filter>
+          filter "record.to_yaml; [Time.now.to_i, record]"
+        </filter>
+      ])
+      assert_nothing_raised {
+        d.run(default_tag: 'test') { d.feed({'key' => 'value'}) }
+      }
+    end
+
     test 'require error' do
       config = %[
         requires hoge

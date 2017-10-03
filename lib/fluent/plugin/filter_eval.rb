@@ -4,7 +4,7 @@ module Fluent::Plugin
   class EvalFilter < Filter
     Fluent::Plugin.register_filter('eval', self)
 
-    config_param :requires, :string, default: nil, :desc => "require libraries."
+    config_param :requires, :array, default: [], :desc => "require libraries."
     config_section :filter, param_name: :filter_config, multi: true do
       config_param :filter, :string
       config_param :config, :string, default: ""
@@ -18,7 +18,7 @@ module Fluent::Plugin
       super
 
       if @requires
-        @requires.split(',').each do |lib|
+        @requires.each do |lib|
           begin
             require lib
           rescue Exception => e
