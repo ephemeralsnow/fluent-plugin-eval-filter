@@ -1,19 +1,23 @@
-class Fluent::EvalFilterOutput < Fluent::Output
+require 'fluent/plugin/output'
+
+class Fluent::Plugin::EvalFilterOutput < Fluent::Plugin::Output
 
   Fluent::Plugin.register_output('eval_filter', self)
 
-  config_param :requires, :string, default: nil, :desc => "require libraries."
+  helpers :event_emitter
 
-  # Define `router` method of v0.12 to support v0.10 or earlier
-  unless method_defined?(:router)
-    define_method("router") { Fluent::Engine }
+  config_param :requires, :array, default: [], :desc => "require libraries."
+  config_section :rule, param_name: :filter_config, multi: true do
+    config_param :filter, :string
   end
-
+  config_section :eval, param_name: :eval_config, multi: true do
+    config_param :config, :string
+  end
   def configure(conf)
     super
 
     if @requires
-      @requires.split(',').each do |lib|
+      @requires.each do |lib|
         begin
           require lib
         rescue Exception => e
@@ -31,20 +35,20 @@ class Fluent::EvalFilterOutput < Fluent::Output
     @add_tag_prefix = conf['add_tag_prefix']
     @add_tag_suffix = conf['add_tag_suffix']
 
-    conf.keys.select { |key| key =~ /^config\d+$/ }.sort_by { |key| key.sub('config', '').to_i }.each do |key|
+    @eval_config.each do |conf|
       begin
-        instance_eval("#{conf[key]}")
+        instance_eval("#{conf.config}")
       rescue Exception => e
-        raise Fluent::ConfigError, "#{key} #{conf[key]}\n" + e.to_s
+        raise Fluent::ConfigError, "#{key} #{conf.config}\n" + e.to_s
       end
     end
 
     @filters = []
-    conf.keys.select { |key| key =~ /^filter\d+$/ }.sort_by { |key| key.sub('filter', '').to_i }.each do |key|
+    @filter_config.each do |conf|
       begin
-        @filters << instance_eval("lambda do |tag, time, record| #{conf[key]} end")
+        @filters << instance_eval("lambda do |tag, time, record| #{conf.filter} end")
       rescue Exception => e
-        raise Fluent::ConfigError, "#{key} #{conf[key]}\n" + e.to_s
+        raise Fluent::ConfigError, "#{key} #{conf.filter}\n" + e.to_s
       end
     end
 
@@ -53,7 +57,7 @@ class Fluent::EvalFilterOutput < Fluent::Output
     end
   end
 
-  def emit(tag, es, chain)
+  def process(tag, es)
     tag = handle_tag(tag)
     es.each do |time, record|
       results = filter_record(tag, time, record)
@@ -63,7 +67,6 @@ class Fluent::EvalFilterOutput < Fluent::Output
         end
       end
     end
-    chain.next
   end
 
   def handle_tag(tag)

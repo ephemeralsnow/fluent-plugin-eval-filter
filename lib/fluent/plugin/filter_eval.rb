@@ -1,8 +1,16 @@
-module Fluent
+require 'fluent/plugin/filter'
+
+module Fluent::Plugin
   class EvalFilter < Filter
     Fluent::Plugin.register_filter('eval', self)
 
-    config_param :requires, :string, default: nil, :desc => "require libraries."
+    config_param :requires, :array, default: [], :desc => "require libraries."
+    config_section :rule, param_name: :filter_config, multi: true do
+      config_param :filter, :string
+    end
+    config_section :eval, param_name: :eval_config, multi: true do
+      config_param :config, :string
+    end
 
     def initialize
       super
@@ -12,7 +20,7 @@ module Fluent
       super
 
       if @requires
-        @requires.split(',').each do |lib|
+        @requires.each do |lib|
           begin
             require lib
           rescue Exception => e
@@ -21,20 +29,20 @@ module Fluent
         end
       end
 
-      conf.keys.select { |key| key =~ /^config\d+$/ }.sort_by { |key| key.sub('config', '').to_i }.each do |key|
+      @eval_config.each do |conf|
         begin
-          instance_eval("#{conf[key]}")
+          instance_eval("#{conf.config}")
         rescue Exception => e
-          raise Fluent::ConfigError, "#{key} #{conf[key]}\n" + e.to_s
+          raise Fluent::ConfigError, "#{key} #{conf.config}\n" + e.to_s
         end
       end
 
       @filters = []
-      conf.keys.select { |key| key =~ /^filter\d+$/ }.sort_by { |key| key.sub('filter', '').to_i }.each do |key|
+      @filter_config.each do |conf|
         begin
-          @filters << instance_eval("lambda do |tag, time, record| #{conf[key]} end")
+          @filters << instance_eval("lambda do |tag, time, record| #{conf.filter} end")
         rescue Exception => e
-          raise Fluent::ConfigError, "#{key} #{conf[key]}\n" + e.to_s
+          raise Fluent::ConfigError, "#{key} #{conf.filter}\n" + e.to_s
         end
       end
 
@@ -43,26 +51,16 @@ module Fluent
       end
     end
 
-    def filter_stream(tag, es)
-      new_es = MultiEventStream.new
-      es.each { |time, record|
-        begin
-          filtered_record = filter_record(tag, time, record)
-          new_es.add(*filtered_record) if filtered_record
-        rescue => e
-          router.emit_error_event(tag, time, record, e)
+    def filter(tag, time, record)
+      begin
+        @filters.each do |filter|
+          filter_results = filter.call(tag, time, record)
+          return filter_results if filter_results
         end
-      }
-      new_es
-    end
-
-    private
-    def filter_record(tag, time, record)
-      @filters.each do |filter|
-        filter_results = filter.call(tag, time, record)
-        return filter_results if filter_results
+        nil
+      rescue => e
+        router.emit_error_event(tag, time, record, e)
       end
-      nil
     end
   end
 end

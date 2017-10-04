@@ -18,27 +18,33 @@ Or install it yourself as:
 
 ```
 <match raw.apache.access>
-  type eval_filter
+  @type eval_filter
   remove_tag_prefix raw
   add_tag_prefix filtered
 
-  config1 @hostname = `hostname -s`.chomp
-
-  filter1 [[tag, @hostname].join('.'), time, record] if record['method'] == 'GET'
+  <eval>
+    config @hostname = `hostname -s`.chomp
+  </eval>
+  <rule>
+    filter "[[tag, @hostname].join('.'), time, record] if record['method'] == 'GET'"
+  </rule>
 </match>
 ```
 
 ### require libraries
 ```
 <match raw.apache.access>
-  type eval_filter
+  @type eval_filter
   remove_tag_prefix raw
   add_tag_prefix filtered
   requires yaml # comma separated values
 
-  config1 @hostname = YAML.load({'hostname' => 'web01'})['hostname']
-
-  filter1 [[tag, @hostname].join('.'), time, record] if record['method'] == 'GET'
+  <eval>
+    config @hostname = YAML.load({'hostname' => 'web01'})['hostname']
+  </eval>
+  <rule>
+    filter "[[tag, @hostname].join('.'), time, record] if record['method'] == 'GET'"
+  </rule>
 </match>
 ```
 
@@ -53,24 +59,32 @@ Should return [time, record].
 ### filter:
 
     <filter **>
-      type eval
-      filter1 "[time, record] if record['status'] == '404'"
-      filter2 "[time, record] if record['status'] == 'POST'"
+      @type eval
+      <rule>
+        filter "[time, record] if record['status'] == '404'"
+      </rule>
+      <rule>
+        filter "[time, record] if record['status'] == 'POST'"
+      </rule>
     </filter>
 
 
 ### typecast(string to integer):
 
     <filter **>
-      type eval
-      filter1 "record['status'] = record['status'].to_i; [time, record]"
+      @type eval
+      <rule>
+        filter "record['status'] = record['status'].to_i; [time, record]"
+      </rule>
     </filter>
 
 ### modify record(add value):
 
     <filter **>
-      type eval
-      filter1 "record['user_id'] = record['message'].split(':').last.to_i; [time, record]"
+      @type eval
+      <rule>
+        filter "record['user_id'] = record['message'].split(':').last.to_i; [time, record]"
+      </rule>
     </filter>
 
 #### input
@@ -94,13 +108,16 @@ Should return [time, record].
 Can not be used expression substitution.
 ```
 <match raw.apache.access>
-  filter1 "#{tag}"
+  @type eval_rule
+  <rule>
+    filter "#{tag}"
+  </rule>
 </match>
 ```
 
 '#' Is interpreted as the beginning of a comment.
 ```
-  filter1 #=> "\""
+  filter #=> "\""
 ```
 
 ## Contributing
