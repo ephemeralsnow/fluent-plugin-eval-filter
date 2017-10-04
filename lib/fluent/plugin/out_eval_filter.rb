@@ -7,11 +7,12 @@ class Fluent::Plugin::EvalFilterOutput < Fluent::Plugin::Output
   helpers :event_emitter
 
   config_param :requires, :array, default: [], :desc => "require libraries."
-  config_section :filter, param_name: :filter_config, multi: true do
+  config_section :rule, param_name: :filter_config, multi: true do
     config_param :filter, :string
-    config_param :config, :string, default: ""
   end
-
+  config_section :eval, param_name: :eval_config, multi: true do
+    config_param :config, :string
+  end
   def configure(conf)
     super
 
@@ -34,7 +35,7 @@ class Fluent::Plugin::EvalFilterOutput < Fluent::Plugin::Output
     @add_tag_prefix = conf['add_tag_prefix']
     @add_tag_suffix = conf['add_tag_suffix']
 
-    @filter_config.each do |conf|
+    @eval_config.each do |conf|
       begin
         instance_eval("#{conf.config}")
       rescue Exception => e

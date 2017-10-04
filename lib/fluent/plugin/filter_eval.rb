@@ -5,9 +5,11 @@ module Fluent::Plugin
     Fluent::Plugin.register_filter('eval', self)
 
     config_param :requires, :array, default: [], :desc => "require libraries."
-    config_section :filter, param_name: :filter_config, multi: true do
+    config_section :rule, param_name: :filter_config, multi: true do
       config_param :filter, :string
-      config_param :config, :string, default: ""
+    end
+    config_section :eval, param_name: :eval_config, multi: true do
+      config_param :config, :string
     end
 
     def initialize
@@ -27,7 +29,7 @@ module Fluent::Plugin
         end
       end
 
-      @filter_config.each do |conf|
+      @eval_config.each do |conf|
         begin
           instance_eval("#{conf.config}")
         rescue Exception => e

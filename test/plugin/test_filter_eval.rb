@@ -28,9 +28,9 @@ class EvalFilterTest < Test::Unit::TestCase
   sub_test_case 'configure' do
     test 'check default' do
       config = %[
-        <filter>
+        <rule>
           filter "[time, record] if record['status'] == '404'"
-        </filter>
+        </rule>
       ]
       assert_nothing_raised {
         create_driver(config)
@@ -52,12 +52,12 @@ class EvalFilterTest < Test::Unit::TestCase
         {'status' => '401', 'message' => 'message'}
       ]
       config = %[
-        <filter>
+        <rule>
           filter "[time, record] if record['status'] == '404'"
-        </filter>
-        <filter>
+        </rule>
+        <rule>
           filter "[time, record] if record['status'] == '503'"
-        </filter>
+        </rule>
       ]
       es = filter(config, msgs)
       assert_equal(es.size, 2)
@@ -76,9 +76,9 @@ class EvalFilterTest < Test::Unit::TestCase
         {'status' => '401', 'message' => 'message'}
       ]
       config = %[
-        <filter>
+        <rule>
          filter "record['status'] = record['status'].to_i; [time, record]"
-        </filter>
+        </rule>
       ]
       es = filter(config, msgs)
       assert_equal(es.size, 5)
@@ -100,9 +100,9 @@ class EvalFilterTest < Test::Unit::TestCase
         {'status' => '401', 'message' => 'user_id:5'}
       ]
       config = %[
-        <filter>
+        <rule>
           filter "record['user_id'] = record['message'].split(':').last.to_i; [time, record]"
-        </filter>
+        </rule>
       ]
       es = filter(config, msgs)
       assert_equal(es.size, 5)
@@ -118,9 +118,9 @@ class EvalFilterTest < Test::Unit::TestCase
     test 'require yaml' do
       config = %[
         requires yaml
-        <filter>
+        <rule>
           filter "record.to_yaml; [time, record]"
-        </filter>
+        </rule>
       ]
       assert_nothing_raised {
         create_driver(config)
@@ -132,9 +132,9 @@ class EvalFilterTest < Test::Unit::TestCase
     test 'require libraries with whitespace' do
       d = create_driver(%[
         requires yaml, time
-        <filter>
+        <rule>
           filter "record.to_yaml; [Time.now.to_i, record]"
-        </filter>
+        </rule>
       ])
       assert_nothing_raised {
         d.run(default_tag: 'test') { d.feed({'key' => 'value'}) }
@@ -144,9 +144,9 @@ class EvalFilterTest < Test::Unit::TestCase
     test 'require error' do
       config = %[
         requires hoge
-        <filter>
+        <rule>
           filter "record.to_yaml; [time, record]"
-        </filter>
+        </rule>
       ]
       assert_raise(Fluent::ConfigError) do
         create_driver(config)
